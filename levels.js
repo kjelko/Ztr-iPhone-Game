@@ -121,7 +121,11 @@ levels[0] = function(canvasId) {
   var ui = new Ui(document.getElementById(canvasId), document.getElementById(canvasId).getContext('2d'));
   var b = {};
   b.coords = utils.square(pauseButton.dx, pauseButton.dy, pauseButton.dWidth, pauseButton.dHeight);
-  b.callback = function(){level.pause(); LevelSelect(canvasId);};
+  b.callback = function(){
+    level.pause();
+    ui.clear();
+    LevelSelect(canvasId);
+  };
   ui.addButton(b);
   
   level.start();  
@@ -290,7 +294,11 @@ levels[1] = function(canvasId) {
   var ui = new Ui(document.getElementById(canvasId), document.getElementById(canvasId).getContext('2d'));
   var b = {};
   b.coords = utils.square(pauseButton.dx, pauseButton.dy, pauseButton.dWidth, pauseButton.dHeight);
-  b.callback = function(){level.pause(); LevelSelect(canvasId);};
+  b.callback = function(){
+    level.pause();
+    ui.clear();
+    LevelSelect(canvasId);
+  };
   ui.addButton(b);
   
   
