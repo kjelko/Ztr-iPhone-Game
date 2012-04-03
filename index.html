@@ -5,14 +5,28 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <link rel="apple-touch-icon-precomposed" href="images/icon.png" />
-<script src = "utils.js"></script>
-<script src = "levels.js"></script>
-<script src = "sprites.js"></script>
-<script src = "ztrengine.js"></script>
-<script src = "admin.js"></script>
+<script src ="utils.js"></script>
+<script src ="levels.js"></script>
+<script src ="sprites.js"></script>
+<script src ="ztrengine.js"></script>
+<script src ="admin.js"></script>
 <script>
 
 window.onload = (function(){
+  var ratio;
+  if(window.devicePixelRatio) {
+    ratio = window.devicePixelRatio;
+  } else {
+    ratio = 1;
+  }
+  var canvas = document.getElementById('canvas-id');
+  var cxt = canvas.getContext('2d');
+  canvas.width = window.innerWidth * ratio;
+  canvas.height = window.innerHeight * ratio;
+  canvas.style.width = window.innerWidth + 'px';
+  canvas.style.height = window.innerHeight + 'px';
+  cxt.scale(ratio, ratio);
+  
   new SplashScreen('canvas-id');
 });
 
