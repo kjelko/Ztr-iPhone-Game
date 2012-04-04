@@ -1,6 +1,7 @@
 Description
 -----------
-A simple iPhone game built in JavaScript and HTML5 Canvas
+A simple iPhone game built in JavaScript and HTML5 Canvas.  You control a zero turn radius 
+lawn mower and must mow as much lawn as you can in a certain time limit!
 
 Demo
 ----
