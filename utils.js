@@ -1,5 +1,17 @@
+/**
+ * @fileoverview Contains some useful math related functions
+ *
+ */
+
 var utils = {};
 
+
+/**
+ * Checks to see if point is inside a polygon.
+ * @param {Object} poly The polygon.
+ * @param {Object} pt The point.
+ * 
+ */
 utils.pointInPoly = function(poly, pt){
 	for(var c = false, i = -1, l = poly.length, j = l - 1; ++i < l; j = i)
 		((poly[i][1] <= pt[1] && pt[1] < poly[j][1]) || (poly[j][1] <= pt[1] && pt[1] < poly[i][1]))
@@ -9,54 +21,26 @@ utils.pointInPoly = function(poly, pt){
 }
 
 
-utils.distance = function(pt, pt2) {
-  return Math.sqrt(Math.pow((pt2[0] - pt[0]), 2) + Math.pow((pt2[1] - pt[1]), 2));
-}
-
-utils.polyOverlap = function(poly1, poly2){
-  if(utils.checkPolyOverlap(poly1, poly2)) {
-    return true;
-  } else if(utils.checkPolyOverlap(poly2, poly1)) {
-    return true;
-  } else {
-    return false;
-  }
-};
-
-utils.checkPolyOverlap = function(poly1, poly2) {
-    for(i = 0; i < poly1.length; i++){
-    
-      var x1 = poly1[i][0],
-      y1 = poly1[i][1],
-      x2 = (poly1[i+1]) ? poly1[i+1][0] : poly1[0][0],
-      y2 = (poly1[i+1]) ? poly1[i+1][1] : poly1[0][1];  
-    
-      var dx = x2 - x1,
-      dy = y2 - y1;
-      bottom = Math.sqrt(dx*dx + dy*dy),
-      unitx = dx/bottom,
-      unity = dy/bottom,
-      curx = x1,
-      cury = y1;
-    
-      var d = utils.distance([x1, y1],[x2, y2]);
-    
-      var pointsColliding = 0;
-    
-      while(utils.distance([x1, y1], [x2, y2]) < d) {
-        if(utils.pointInPoly(poly2, [curx, cury])) {
-          return true;
-        }
-        curx += 5*unitx;
-        cury += 5*unity;
-      }
-  }
-}
-
+/**
+ * Provides a quick way to build a square.
+ * @param {int} x The x coord of the top left corner.
+ * @param {int} y The y coord of the top left corner.
+ * @param {int} width
+ * @param {int} height
+ * @return {Object} An object containing the points of the square.
+ * 
+ */
 utils.square = function(x, y, width, height) {
   return [[x, y], [x+width, y], [x+width, y+height], [x, y+height]];
 }
 
+
+/**
+ * Rotates a polygon around a given angle.
+ * @param {int} angle
+ * @param {Object} The polygon to rotate.
+ * @return {Object} An polygon object with updated points.
+ */
 utils.rotatePoly = function(angle, poly) {
   var cos = Math.cos(-1*angle),
   sin = Math.sin(-1*angle),
@@ -72,10 +56,13 @@ utils.rotatePoly = function(angle, poly) {
 };
 
 
-
-
-
-
+/**
+ * Defines the seperating axis theorem collision test.
+ * @param {Object} poly1 Polygon object to check. 
+ * @param {Object} poly2 Polygon object to check.
+ * @return {Object} Returns an object with information about the collision.
+ * 
+ */
 utils.sat = function(poly1, poly2) {
     var points1 = poly1,
 			points2 = poly2,

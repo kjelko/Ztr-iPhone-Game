@@ -1,3 +1,17 @@
+/**
+ * @fileoverview This file defines some administrative functions that are used
+ * to handle the splash screen, level selection, etc.
+ *
+ */
+
+/**
+ * Shows the splash screen.
+ * @param {HTMLCanvas} canvas The main canvas.
+ * @param {2dCanvasContext} cxt The 2d context of canvas.
+ * @todo I should just pass a ui object here.  This function should be called
+ * from the all encompassing object that is yet to be defined.
+ * 
+ */
 var SplashScreen = function(canvas, cxt){
   ui = new Ui(canvas, cxt);
   
@@ -25,7 +39,11 @@ var SplashScreen = function(canvas, cxt){
 };
 
 
-
+/**
+ * Shows the splash screen.
+ * @ui {Ui} ui A ui object upon which to display the level selection screen.
+ *
+ */
 var LevelSelect = function(ui){
   
   var numLevels = 0;
