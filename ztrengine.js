@@ -51,8 +51,11 @@ var Ztr = function(cvs, windowW, windowH){
     collisions : [],
     timer : false,
     paused : false,
-    endFunction : null
+    endFunction : null,
+    spriteMap : document.createElement('canvas'),
+    spriteMapContext: null
   };
+  
   
   /**
    * Here are defined a number of public functions that can be called externally.
@@ -98,6 +101,10 @@ var Ztr = function(cvs, windowW, windowH){
   this.drawSprite = function(sprite){
     globals.sprites.push(sprite);
     globals.sprites.sort(function(a, b){return a.dz - b.dz});
+    if(sprite.drawToSpriteMap) {
+      this.drawToSpriteMap(utils.square(sprite.dx, sprite.dy,
+        sprite.dWidth, sprite.dHeight));
+    }
   };
 
   this.drawStaticSprite = function(sprite) {
@@ -129,12 +136,15 @@ var Ztr = function(cvs, windowW, windowH){
     globals.background = sprite;
     globals.playable.width = sprite.dWidth;
     globals.playable.height = sprite.dHeight;
+    globals.spriteMap.width = globals.playable.width;
+    globals.spriteMap.height = globals.playable.height;
+    globals.spriteMapContext = globals.spriteMap.getContext('2d');
   };
   
   this.drawTrail = function(x, opt_clearHistory) {
     if(x && globals.trail.context == null) {
-      globals.trail.canvas.width = globals.background.dWidth;
-      globals.trail.canvas.height = globals.background.dHeight;
+      globals.trail.canvas.width = globals.playable.width;
+      globals.trail.canvas.height = globals.playable.height;
       globals.trail.context = globals.trail.canvas.getContext('2d');
     } else if (x && globals.trail.context != null && opt_clearHistory) {
       globals.trail.context.clearRect(0,0,globals.playable.width,globals.playable.height);
@@ -154,7 +164,20 @@ var Ztr = function(cvs, windowW, windowH){
   
   this.drawObstacle = function(obj, beginCollision, endCollision) {
     this.drawSprite(obj);
+    this.drawToSpriteMap(obj.hitAreaStatic);
     this.hitTest(globals.hero, obj, beginCollision, endCollision, true);
+  };
+  
+  this.drawToSpriteMap = function(poly) {
+    var cxt = globals.spriteMapContext;
+    cxt.beginPath();
+    cxt.moveTo(poly[0][0], poly[0][1]);
+    for(var i in poly){
+      cxt.lineTo(poly[i][0], poly[i][1]);
+    }
+    cxt.closePath();
+    cxt.fillStyle = '#111';
+    cxt.fill();
   };
   
   this.drawItem = function(obj, beginCollision, endCollision) {
@@ -219,7 +242,7 @@ var Ztr = function(cvs, windowW, windowH){
   }
   
   var spritesLoaded = function(){
-    for(i in globals.sprites){
+    for(var i in globals.sprites){
       if(!globals.sprites[i].load) {
         return false;
       }
@@ -255,7 +278,7 @@ var Ztr = function(cvs, windowW, windowH){
   };
   
   var handleTouchEnd = function(e) {
-    for(i in e.changedTouches) {
+    for(var i in e.changedTouches) {
       if(e.changedTouches[i] == globals.controlTouches.right){
         globals.controlTouches.right = null;
       } else if(e.changedTouches[i] == globals.controlTouches.left){
@@ -387,10 +410,16 @@ var Ztr = function(cvs, windowW, windowH){
       prevPosX, prevPosY,
       prevW, prevH
     );
+    context.drawImage(globals.spriteMap,
+      0, 0,
+      prevW*10, prevH*10,
+      prevPosX, prevPosY,
+      prevW, prevH
+    );
   };
   
   var drawSprites = function(){
-    for(sId in globals.sprites) {
+    for(var sId in globals.sprites) {
       var s = globals.sprites[sId];
       if(!s.fixed) {
         rotateCanvas();
@@ -422,7 +451,8 @@ var Ztr = function(cvs, windowW, windowH){
       if(globals.timer == 0) {
         this.pause();
         globals.endFunction({
-          trail : globals.trail
+          trail : globals.trail,
+          spriteMap: globals.spriteMapContext
         });
       }
       
@@ -456,7 +486,7 @@ var Ztr = function(cvs, windowW, windowH){
       var gvpx = globals.view.pos.x;
       var gvpy = globals.view.pos.y;
       
-      for(i = 0; i <= 3; i++){
+      for(var i = 0; i <= 3; i++){
         sqr2[i][0] = obj.hitAreaStatic[i][0] + gvpx - globals.playable.width/2;
         sqr2[i][1] = obj.hitAreaStatic[i][1] + gvpy - globals.playable.height/2;
       }
@@ -471,7 +501,7 @@ var Ztr = function(cvs, windowW, windowH){
   
   var checkHits = function() {
     
-    for(i in globals.collisions) {
+    for(var i in globals.collisions) {
       cxt = globals.canvas;
       htest = globals.collisions[i];
     

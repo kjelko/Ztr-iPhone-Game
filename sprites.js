@@ -48,6 +48,8 @@ var Sprite = function(p){
     this.dz = p.dz;
   else
     this.dz = 0;
+    
+  this.drawToSpriteMap = p.drawToSpriteMap;
   
   //Set up the sprite hit area.  Defaults to the borders of the sprite.
   if(p.hitArea){

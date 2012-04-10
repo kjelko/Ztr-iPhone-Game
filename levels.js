@@ -244,7 +244,8 @@ levels[2] = function(ui) {
     dHeight: 124,
     dx: 0,
     dy: 155,
-    dz: -1
+    dz: -1,
+    drawToSpriteMap: true
   });
   level.drawSprite(driveway);
   
@@ -309,12 +310,12 @@ levels[2] = function(ui) {
   
   
   //Set the amount of time the player has to mow
-  level.setTimer(150);
+  level.setTimer(175);
   
   
   //Set the function to be called when time runs out
   level.setGameOver(function(levelInfo){
-    levelComplete(levelInfo, 2, 60);
+    levelComplete(levelInfo, 2, 85);
   });
   
   
@@ -334,14 +335,22 @@ levels[2] = function(ui) {
  */
 var levelComplete = function(levelInfo, levelNo, goal){
   level.pause();
-  var t= levelInfo.trail;
-  var pixels = t.context.getImageData(0,0,t.canvas.width, t.canvas.height).data;
-  var coveredPixels = 0;
+  var t = levelInfo.trail,
+  trailPix = t.context.getImageData(0,0,t.canvas.width, t.canvas.height).data,
+  spritePix = levelInfo.spriteMap.getImageData(0,0,t.canvas.width, t.canvas.height).data,
+  possiblePixels = 0,
+  coveredPixels = 0;
+
+  for(var i=0; i < spritePix.length; i+=4){
+    if((trailPix[i] || trailPix[i+1] || trailPix[i+2]) &&
+       !(spritePix[i] || spritePix[i+1] || spritePix[i+2]))
+      coveredPixels++;
+    if(!(spritePix[i] || spritePix[i+1] || spritePix[i+2]))
+      possiblePixels++;
+  } 
   
-  for(i=0; i < pixels.length; i++){
-    if(pixels[i] != 0) coveredPixels++
-  }
-  var percent = Math.round(coveredPixels/pixels.length * 100);
+  var percent = Math.round(coveredPixels/possiblePixels * 100);
+  if(percent > 100) percent = 100;
   
   var moveOn = function(){
     ui.clear(true);
