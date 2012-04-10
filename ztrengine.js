@@ -17,6 +17,7 @@
  * 
  * @todo Make it so this accepts a Ui object as a param
  * @todo Make everything more settable (speed, mower width, etc)
+ * @todo Move timer functionality to utils
  * 
  */
 var Ztr = function(cvs, windowW, windowH){

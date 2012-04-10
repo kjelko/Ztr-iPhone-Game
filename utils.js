@@ -80,17 +80,17 @@ utils.sat = function(poly1, poly2){
     
     min1 = min2 = max1 = max2 = -1;
     
-		for(j = 0; j < poly1.length; ++j) {
-		  dot = poly1[j][0] * norm.x + poly1[j][1] * norm.y;
-			if(dot > max1 || max1 == -1) max1 = dot;
-			if(dot < min1 || min1 == -1) min1 = dot;
-		}
+    for(j = 0; j < poly1.length; ++j) {
+      dot = poly1[j][0] * norm.x + poly1[j][1] * norm.y;
+      if(dot > max1 || max1 == -1) max1 = dot;
+      if(dot < min1 || min1 == -1) min1 = dot;
+    }
     
     for(j = 0; j < poly2.length; ++j) {
-			dot = poly2[j][0] * norm.x + poly2[j][1] * norm.y;
-			if(dot > max2 || max2 == -1) max2 = dot;
-		  if(dot < min2 || min2 == -1) min2 = dot;
-		}
+      dot = poly2[j][0] * norm.x + poly2[j][1] * norm.y;
+      if(dot > max2 || max2 == -1) max2 = dot;
+      if(dot < min2 || min2 == -1) min2 = dot;
+    }
     
     if(min1 < min2) {
       overlap = min2 - max1;
@@ -121,17 +121,17 @@ utils.sat = function(poly1, poly2){
     
     min1 = min2 = max1 = max2 = -1;
     
-		for(j = 0; j < poly1.length; ++j) {
-		  dot = poly1[j][0] * norm.x + poly1[j][1] * norm.y;
-			if(dot > max1 || max1 == -1) max1 = dot;
-			if(dot < min1 || min1 == -1) min1 = dot;
-		}
+    for(j = 0; j < poly1.length; ++j) {
+      dot = poly1[j][0] * norm.x + poly1[j][1] * norm.y;
+      if(dot > max1 || max1 == -1) max1 = dot;
+      if(dot < min1 || min1 == -1) min1 = dot;
+    }
     
     for(j = 0; j < poly2.length; ++j) {
-			dot = poly2[j][0] * norm.x + poly2[j][1] * norm.y;
-			if(dot > max2 || max2 == -1) max2 = dot;
-		  if(dot < min2 || min2 == -1) min2 = dot;
-		}
+      dot = poly2[j][0] * norm.x + poly2[j][1] * norm.y;
+      if(dot > max2 || max2 == -1) max2 = dot;
+      if(dot < min2 || min2 == -1) min2 = dot;
+    }
     
     if(min1 < min2) {
       overlap = min2 - max1;
