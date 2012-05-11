@@ -17,7 +17,6 @@
  * 
  * @todo Make it so this accepts a Ui object as a param
  * @todo Make everything more settable (speed, mower width, etc)
- * @todo Move timer functionality to utils
  * 
  */
 var Ztr = function(cvs, windowW, windowH){
@@ -27,35 +26,37 @@ var Ztr = function(cvs, windowW, windowH){
    * that the engine needs.
    * @type {object}
    */
-  var globals = {
-    loop: null,
-    hits : 0,
-    window : {width:windowW, height: windowH},
-    playable : {width: 0, height: 0}, 
-    self : this,
-    sprites : [],
-    staticSprites : [],
-    hero: null,
-    canvasDom : document.getElementById(cvs),
-    canvas : document.getElementById(cvs).getContext('2d'),
-    controlTouches : {right: null, left: null},
-    controlSprites : {right: null, left: null},
-    view: {angle: 0, pos: {x: 0, y: 0}},
-    background : null,
-    drawTrail: false,
-    trail: {
+  var
+    ztr = this,
+    loop = null,
+    window = {width:windowW, height: windowH},
+    playable = {width: 0, height: 0}, 
+    self = this,
+    sprites = [],
+    staticSprites = [],
+    hero = null,
+    canvasDom = document.getElementById(cvs),
+    canvas = document.getElementById(cvs).getContext('2d'),
+    controlTouches = {right: null, left: null},
+    controlSprites = {right: null, left: null},
+    view = {angle: 0, pos: {x: 0, y: 0}},
+    speed = 5,  //default speed value.
+    background = null,
+    drawTrail = false,
+    trail = {
       image: new Image(),
       points:[],
       canvas: document.createElement('canvas'),
       context: null
     },
-    collisions : [],
-    timer : false,
-    paused : false,
-    endFunction : null,
-    spriteMap : document.createElement('canvas'),
-    spriteMapContext: null
-  };
+    collisions  = [],
+    timer  = false,
+    paused = false,
+    endFunction = null,
+    spriteMap = document.createElement('canvas'),
+    spriteMapContext = null,
+    levelNo = null,
+    goal = null;
   
   
   /**
@@ -64,47 +65,58 @@ var Ztr = function(cvs, windowW, windowH){
    * 
    */
   
+  this.setGoal = function(newGoal){
+    goal = newGoal;
+  }
+  
+  this.setLevelNo = function(newLevelNo){
+    levelNo = newLevelNo;
+  }
+  
   this.setGameOver = function(f){
-    globals.endFunction = f;
+    endFunction = f;
   };
   
   this.pause = function(){
-    globals.paused = true;
-    clearInterval(globals.loop);
+    paused = true;
+    clearInterval(loop);
   }
   
   this.resume = function(){
     self = this;
-    globals.paused = false;
+    paused = false;
     setTimeout(function(){runTimer.call(self)}, 1000);
-    globals.loop = setInterval(loop, 1000/35);
+    loop = setInterval(loop, 1000/35);
   }
   
   this.setTimer = function(t) {
-    globals.timer = t;
+    timer = t;
   }
   
   this.setTouchListeners = function() {
-    var canvas = globals.canvasDom;
     if('createTouch' in document) {
-      canvas.addEventListener('touchstart', function(e){handleTouchStart(e)}, false);
-      canvas.addEventListener('touchmove', function(e){handleTouchMove(e)}, false);
-      canvas.addEventListener('touchend', function(e){handleTouchEnd(e)}, false);
+      canvasDom.addEventListener('touchstart', function(e){handleTouchStart(e)}, false);
+      canvasDom.addEventListener('touchmove', function(e){handleTouchMove(e)}, false);
+      canvasDom.addEventListener('touchend', function(e){handleTouchEnd(e)}, false);
     }
   };
 
   this.setWindow = function(w, h){
-    globals.window.width = w;
-    globals.window.height = h;
-    globals.canvas = globals.canvasDom.getContext('2d');
+    window.width = w;
+    window.height = h;
+    canvas = canvasDom.getContext('2d');
   };
 
   this.drawSprite = function(sprite){
-    globals.sprites.push(sprite);
-    globals.sprites.sort(function(a, b){return a.dz - b.dz});
+    sprites.push(sprite);
+    sprites.sort(function(a, b){return a.dz - b.dz});
     if(sprite.drawToSpriteMap) {
-      this.drawToSpriteMap(utils.square(sprite.dx, sprite.dy,
-        sprite.dWidth, sprite.dHeight));
+      if(sprite.hitAreaStatic) {
+        this.drawToSpriteMap(sprite.hitAreaStatic);
+      } else {
+        this.drawToSpriteMap(utils.square(sprite.dx, sprite.dy,
+          sprite.dWidth, sprite.dHeight));
+      }
     }
   };
 
@@ -113,81 +125,83 @@ var Ztr = function(cvs, windowW, windowH){
   };
   
   this.setControlSprite = function(side, sprite){
-    var canvas = globals.canvasDom;
     if(side == 'right') {
-      sprite.dx = globals.window.width - sprite.dWidth;
-      globals.controlSprites.right = sprite;
+      sprite.dx = window.width - sprite.dWidth;
+      controlSprites.right = sprite;
     } else if(side == 'left') {
       sprite.dx = 0;
-      globals.controlSprites.left = sprite;
+      controlSprites.left = sprite;
     }
-    sprite.dy = canvas/2 - sprite.dHeight/2;
+    sprite.dy = canvasDom/2 - sprite.dHeight/2;
     this.drawSprite(sprite);
   };
   
   this.setView = function(angle, newx, newy){
-    globals.view.angle = (angle)?angle:0;
-    globals.view.pos = {
+    view.angle = (angle) ? angle : 0;
+    view.pos = {
       x: (newx) ? newx : 0,
       y: (newy) ? newy : 0
     };
   };
   
+  this.setSpeed = function(newSpeed) {
+    speed = (newSpeed > 0) ? newSpeed : 1;
+  };
+  
   this.setBackground = function(sprite){
-    globals.background = sprite;
-    globals.playable.width = sprite.dWidth;
-    globals.playable.height = sprite.dHeight;
-    globals.spriteMap.width = globals.playable.width;
-    globals.spriteMap.height = globals.playable.height;
-    globals.spriteMapContext = globals.spriteMap.getContext('2d');
+    background = sprite;
+    playable.width = sprite.dWidth;
+    playable.height = sprite.dHeight;
+    spriteMap.width = playable.width;
+    spriteMap.height = playable.height;
+    spriteMapContext = spriteMap.getContext('2d');
   };
   
   this.drawTrail = function(x, opt_clearHistory) {
-    if(x && globals.trail.context == null) {
-      globals.trail.canvas.width = globals.playable.width;
-      globals.trail.canvas.height = globals.playable.height;
-      globals.trail.context = globals.trail.canvas.getContext('2d');
-    } else if (x && globals.trail.context != null && opt_clearHistory) {
-      globals.trail.context.clearRect(0,0,globals.playable.width,globals.playable.height);
+    if(x && trail.context == null) {
+      trail.canvas.width = playable.width;
+      trail.canvas.height = playable.height;
+      trail.context = trail.canvas.getContext('2d');
+    } else if (x && trail.context != null && opt_clearHistory) {
+      trail.context.clearRect(0,0,playable.width,playable.height);
     }
-    globals.drawTrail = x;
+    drawTrail = x;
   };
   
   this.setTrailImage = function(imgPath) {
-    globals.trail.image.src = imgPath;
+    trail.image.src = imgPath;
   };
   
   this.setHero = function(sprite) {
-    globals.hero = sprite;
-    globals.hero.fixed = true;
-    this.drawSprite(globals.hero);
+    hero = sprite;
+    hero.fixed = true;
+    this.drawSprite(hero);
   };
   
   this.drawObstacle = function(obj, beginCollision, endCollision) {
     this.drawSprite(obj);
-    this.drawToSpriteMap(obj.hitAreaStatic);
-    this.hitTest(globals.hero, obj, beginCollision, endCollision, true);
+    //this.drawToSpriteMap(obj.hitAreaStatic);
+    this.hitTest(hero, obj, beginCollision, endCollision, true);
   };
   
   this.drawToSpriteMap = function(poly) {
-    var cxt = globals.spriteMapContext;
-    cxt.beginPath();
-    cxt.moveTo(poly[0][0], poly[0][1]);
+    spriteMapContext.beginPath();
+    spriteMapContext.moveTo(poly[0][0], poly[0][1]);
     for(var i in poly){
-      cxt.lineTo(poly[i][0], poly[i][1]);
+      spriteMapContext.lineTo(poly[i][0], poly[i][1]);
     }
-    cxt.closePath();
-    cxt.fillStyle = '#111';
-    cxt.fill();
+    spriteMapContext.closePath();
+    spriteMapContext.fillStyle = '#111';
+    spriteMapContext.fill();
   };
   
   this.drawItem = function(obj, beginCollision, endCollision) {
     this.drawSprite(obj);
-    this.hitTest(globals.hero, obj, beginCollision, endCollision, false);
+    this.hitTest(hero, obj, beginCollision, endCollision, false);
   };
   
   this.hitTest = function(obj1, obj2, beginCollision, endCollision, solid) {
-    globals.collisions.push({
+    collisions.push({
       o1: obj1,
       o2: obj2,
       beginCollision: beginCollision,
@@ -198,9 +212,9 @@ var Ztr = function(cvs, windowW, windowH){
   };
   
   this.start = function() {
-    globals.canvas.fillStyle = 'black';
-    globals.canvas.font = 'bold 35px Arial';
-    globals.canvas.fillText('loading...', 100, 100);
+    canvas.fillStyle = 'black';
+    canvas.font = 'bold 35px Arial';
+    canvas.fillText('loading...', 100, 100);
     checkSpritesLoaded.call(this);
   };
   
@@ -215,12 +229,10 @@ var Ztr = function(cvs, windowW, windowH){
    *
    */
   var loop = function(){
-    var context = globals.canvas,
-    view = globals.view;
     
-    context.clearRect(0,0,globals.window.width,globals.window.height);
-    context.fillStyle = '#252f3c';
-    context.fillRect(0,0,globals.window.width, globals.window.height);
+    canvas.clearRect(0,0,window.width,window.height);
+    canvas.fillStyle = '#252f3c';
+    canvas.fillRect(0,0,window.width, window.height);
     
     updateControls();
     updateView();
@@ -243,21 +255,21 @@ var Ztr = function(cvs, windowW, windowH){
   }
   
   var spritesLoaded = function(){
-    for(var i in globals.sprites){
-      if(!globals.sprites[i].load) {
+    for(var i in sprites){
+      if(!sprites[i].load) {
         return false;
       }
     }
-    if(!globals.background.load ||
-       !globals.controlSprites.left.load ||
-       !globals.controlSprites.right.load) {
+    if(!background.load ||
+       !controlSprites.left.load ||
+       !controlSprites.right.load) {
       return false;
     }
     return true;
   };
   
   var getHandleY = function(clientY){
-    var h = globals.window.height;
+    var h = window.height;
     if(clientY < h/2 - 115)
       return h/2-115
     else if(clientY > h/2 + 115)
@@ -267,10 +279,10 @@ var Ztr = function(cvs, windowW, windowH){
   };
   
   var handleTouchStart = function(e) {
-    if(e.changedTouches[0].clientX > globals.window.width-70){
-      globals.controlTouches.right = e.changedTouches[0];
+    if(e.changedTouches[0].clientX > window.width-70){
+      controlTouches.right = e.changedTouches[0];
     } else if(e.changedTouches[0].clientX < 70){
-      globals.controlTouches.left = e.changedTouches[0];
+      controlTouches.left = e.changedTouches[0];
     }
   };
   
@@ -280,42 +292,40 @@ var Ztr = function(cvs, windowW, windowH){
   
   var handleTouchEnd = function(e) {
     for(var i in e.changedTouches) {
-      if(e.changedTouches[i] == globals.controlTouches.right){
-        globals.controlTouches.right = null;
-      } else if(e.changedTouches[i] == globals.controlTouches.left){
-        globals.controlTouches.left = null;
+      if(e.changedTouches[i] == controlTouches.right){
+        controlTouches.right = null;
+      } else if(e.changedTouches[i] == controlTouches.left){
+        controlTouches.left = null;
       }
     }
   };
   
+  var getSpeed = function(){
+    return speed/5;
+  };
+  
   var updateView = function() {
-    var context = globals.canvas,
-    view = globals.view,
-    trailPoints = globals.trail.points,
-    cSprt = globals.controlSprites,
-    h = globals.window.height,
-    touches = globals.controlTouches,
-    t, r, l;
+    var trailPoints = trail.points, h = window.height, t, r, l;
     
-    if(touches.right)
-      r = -1 * (getHandleY(globals.controlTouches.right.clientY)-h/2);
+    if(controlTouches.right)
+      r = -1 * (getHandleY(controlTouches.right.clientY)-h/2);
     else
       r = 0
       
-    if(touches.left)  
-      l = -1 * (getHandleY(globals.controlTouches.left.clientY)-h/2);
+    if(controlTouches.left)  
+      l = -1 * (getHandleY(controlTouches.left.clientY)-h/2);
     else
       l = 0;
     
-    view.angle += (((r-l)/2*Math.PI/180)/60);
-    view.pos.x += (Math.sin(view.angle)*(r+l)/80);
-    view.pos.y += (Math.cos(view.angle)*(r+l)/80);
+    view.angle += (((r-l)/2*Math.PI/180)/60) * getSpeed();
+    view.pos.x += (Math.sin(view.angle)*(r+l)/80) * getSpeed();
+    view.pos.y += (Math.cos(view.angle)*(r+l)/80) * getSpeed();
     checkHits();
     
     
     checkPlayableBounds();
     
-    if(globals.drawTrail) {
+    if(drawTrail) {
       if(!trailPoints.length ||
         (view.pos.x < trailPoints[trailPoints.length-1].x - 8 ||
         view.pos.x > trailPoints[trailPoints.length-1].x + 8) ||
@@ -328,35 +338,33 @@ var Ztr = function(cvs, windowW, windowH){
   };
   
   var updateControls = function(){
-    var h = globals.window.height,
-    cSprites = globals.controlSprites;
+    var h = window.height;
     
-    if(!cSprites.right)
-      cSprites.right = {set: false, dHeight:0};
-    if(!cSprites.left)
-      cSprites.left = {set: false, dHeight:0};
+    if(!controlSprites.right)
+      controlSprites.right = {set: false, dHeight:0};
+    if(!controlSprites.left)
+      controlSprites.left = {set: false, dHeight:0};
     
-    if(globals.controlTouches.right) {
-      var touch = globals.controlTouches.right;
-      cSprites.right.dy = getHandleY(touch.clientY) - cSprites.right.dHeight/2;
+    if(controlTouches.right) {
+      var touch = controlTouches.right;
+      controlSprites.right.dy = getHandleY(touch.clientY) - controlSprites.right.dHeight/2;
     } else {
-      cSprites.right.dy = h/2 -
-      cSprites.right.dHeight/2;
+      controlSprites.right.dy = h/2 -
+      controlSprites.right.dHeight/2;
     }
     
-    if(globals.controlTouches.left) {
-      var touch = globals.controlTouches.left;
-      cSprites.left.dy = getHandleY(touch.clientY) - cSprites.left.dHeight/2;
+    if(controlTouches.left) {
+      var touch = controlTouches.left;
+      controlSprites.left.dy = getHandleY(touch.clientY) - controlSprites.left.dHeight/2;
     } else {
-      cSprites.left.dy = h/2 -
-      cSprites.left.dHeight/2;
+      controlSprites.left.dy = h/2 -
+      controlSprites.left.dHeight/2;
     }
   };
   
   var checkPlayableBounds = function() {
-    var view = globals.view;
-    var w = globals.playable.width/2-10;
-    var h = globals.playable.height/2-10;
+    var w = playable.width/2-10;
+    var h = playable.height/2-10;
     
     if (view.pos.x < -1*w) view.pos.x = -1*w;
     if (view.pos.x > w) view.pos.x = w;
@@ -365,53 +373,50 @@ var Ztr = function(cvs, windowW, windowH){
   };
   
   var rotateCanvas = function(){
-    var context = globals.canvas;
-    context.save();
-    context.translate(globals.window.width/2, globals.window.height/2);
-    context.rotate(globals.view.angle);
+    canvas.save();
+    canvas.translate(window.width/2, window.height/2);
+    canvas.rotate(view.angle);
   };
   
   var restoreCanvas = function(){
-    globals.canvas.restore();
+    canvas.restore();
   };
   
   var drawBackground = function(){
     rotateCanvas();
-    var bg = globals.background;
-    globals.canvas.drawImage(bg.image,
-      bg.sx, bg.sy,
-      bg.sWidth, bg.sHeight,
-      globals.view.pos.x-globals.playable.width/2,
-      globals.view.pos.y-globals.playable.height/2,
-      bg.dWidth, bg.dHeight
+    canvas.drawImage(background.image,
+      background.sx, background.sy,
+      background.sWidth, background.sHeight,
+      view.pos.x-playable.width/2,
+      view.pos.y-playable.height/2,
+      background.dWidth, background.dHeight
     );
     restoreCanvas();
   };
   
   var drawTrailToLevel = function(){
     rotateCanvas();
-    globals.canvas.drawImage(globals.trail.canvas,
-      globals.view.pos.x-globals.playable.width/2,
-      globals.view.pos.y-globals.playable.height/2
+    canvas.drawImage(trail.canvas,
+      view.pos.x-playable.width/2,
+      view.pos.y-playable.height/2
     );
     restoreCanvas();
   };
   
   var drawPreviewMap = function(){
-    var context = globals.canvas,
-    prevW = globals.background.dWidth/10,
-    prevH = globals.background.dHeight/10,
-    prevPosX = globals.window.width - prevW - 10,
-    prevPosY = globals.window.height - prevH - 10;
-    context.fillStyle = 'rgba(0,0,0,0.3)';
-    context.fillRect(prevPosX-1, prevPosY-1, prevW+2, prevH+2);
-    context.drawImage(globals.trail.canvas,
+    prevW = background.dWidth/10,
+    prevH = background.dHeight/10,
+    prevPosX = window.width - prevW - 10,
+    prevPosY = window.height - prevH - 10;
+    canvas.fillStyle = 'rgba(0,0,0,0.3)';
+    canvas.fillRect(prevPosX-1, prevPosY-1, prevW+2, prevH+2);
+    canvas.drawImage(trail.canvas,
       0, 0,
       prevW*10, prevH*10,
       prevPosX, prevPosY,
       prevW, prevH
     );
-    context.drawImage(globals.spriteMap,
+    canvas.drawImage(spriteMap,
       0, 0,
       prevW*10, prevH*10,
       prevPosX, prevPosY,
@@ -420,21 +425,21 @@ var Ztr = function(cvs, windowW, windowH){
   };
   
   var drawSprites = function(){
-    for(var sId in globals.sprites) {
-      var s = globals.sprites[sId];
+    for(var sId in sprites) {
+      var s = sprites[sId];
       if(!s.fixed) {
         rotateCanvas();
-        globals.canvas.drawImage(s.image,
-          s.sx, //- globals.playable.width/2,
-          s.sy, //- globals.playable.height/2,
+        canvas.drawImage(s.image,
+          s.sx, //- playable.width/2,
+          s.sy, //- playable.height/2,
           s.sWidth, s.sHeight,
-          globals.view.pos.x + s.dx - globals.playable.width/2,
-          globals.view.pos.y + s.dy - globals.playable.height/2,
+          view.pos.x + s.dx - playable.width/2,
+          view.pos.y + s.dy - playable.height/2,
           s.dWidth, s.dHeight
         );
         restoreCanvas();
       } else {
-        globals.canvas.drawImage(s.image,
+        canvas.drawImage(s.image,
           s.sx, s.sy,
           s.sWidth, s.sHeight,
           s.dx, s.dy,
@@ -445,37 +450,39 @@ var Ztr = function(cvs, windowW, windowH){
   };
   
   var runTimer = function() {
-    if(globals.timer) {
+    if(timer) {
       var self = this;
-      globals.timer--;
+      timer--;
       
-      if(globals.timer == 0) {
+      if(timer == 0) {
         this.pause();
-        globals.endFunction({
-          trail : globals.trail,
-          spriteMap: globals.spriteMapContext
+        endFunction({
+          levelNo : levelNo,
+          goal : goal,
+          trail : trail,
+          spriteMap: spriteMapContext
         });
       }
       
-      if(!globals.paused && globals.timer != 0)
+      if(!paused && timer != 0)
         setTimeout(function(){runTimer.call(self)}, 1000);
     }
   }
   
   var drawTimer = function(){
-    if(globals.timer){
-      globals.canvas.font = 'bold 25px Arial';
-      globals.canvas.fillText(globals.timer, 10, 35);
+    if(timer){
+      canvas.font = 'bold 25px Arial';
+      canvas.fillText(timer, 10, 35);
     }
   };
   
   var addToTrail = function(point){
-    var preContext = globals.trail.context;
-    globals.trail.points.push(point);
+    var preContext = trail.context;
+    trail.points.push(point);
     
-    preContext.drawImage(globals.trail.image,
+    preContext.drawImage(trail.image,
       0, 0, 30, 30,
-      -1*point.x+globals.playable.width/2-15, -1*point.y+globals.playable.height/2-15,
+      -1*point.x+playable.width/2-15, -1*point.y+playable.height/2-15,
       30, 30
     );
     
@@ -484,27 +491,27 @@ var Ztr = function(cvs, windowW, windowH){
   var getHitArea = function(obj) {
     if(!obj.fixed) {
       var sqr2 = [[], [], [], []];
-      var gvpx = globals.view.pos.x;
-      var gvpy = globals.view.pos.y;
+      var gvpx = view.pos.x;
+      var gvpy = view.pos.y;
       
       for(var i = 0; i <= 3; i++){
-        sqr2[i][0] = obj.hitAreaStatic[i][0] + gvpx - globals.playable.width/2;
-        sqr2[i][1] = obj.hitAreaStatic[i][1] + gvpy - globals.playable.height/2;
+        sqr2[i][0] = obj.hitAreaStatic[i][0] + gvpx - playable.width/2;
+        sqr2[i][1] = obj.hitAreaStatic[i][1] + gvpy - playable.height/2;
       }
       
       return sqr2;
     
     } else {
-      return utils.rotatePoly(globals.view.angle, obj.hitAreaStatic);
+      return utils.rotatePoly(view.angle, obj.hitAreaStatic);
     }
     
   };
   
   var checkHits = function() {
     
-    for(var i in globals.collisions) {
-      cxt = globals.canvas;
-      htest = globals.collisions[i];
+    for(var i in collisions) {
+      cxt = canvas;
+      htest = collisions[i];
     
       htest.o1.hitArea = getHitArea(htest.o1);
       htest.o2.hitArea = getHitArea(htest.o2);
@@ -512,15 +519,15 @@ var Ztr = function(cvs, windowW, windowH){
         var item = utils.sat(htest.o1.hitArea, htest.o2.hitArea);
         if(item) {
           if(htest.solid) {
-              globals.view.pos.x -= item.normal.x *-item.overlap;
-              globals.view.pos.y -= item.normal.y *-item.overlap;
+              view.pos.x -= item.normal.x *-item.overlap;
+              view.pos.y -= item.normal.y *-item.overlap;
             }
           if(!htest.active) {
-            htest.beginCollision.call(htest);
+            htest.beginCollision(ztr);
             htest.active = true;
           }
         } else if(htest.active) {
-            htest.endCollision.call(htest);
+            htest.endCollision(ztr);
             htest.active = false;
         } else {
             htest.active = false;

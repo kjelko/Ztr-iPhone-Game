@@ -109,7 +109,7 @@ DatabaseManager.prototype.initialSetup = function() {
   );
   
   for(i in levels){
-    this.levelInfo(i, 0, (i==1)?1:0, function(){});
+    this.levelInfo(i, 0, (i==1) ? 1 : 1, function(){});
   }
   
 };

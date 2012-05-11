@@ -6,326 +6,6 @@
 
 
 /**
- * The array that holds the levels.
- * @type {Array.<object>}
- */
-var levels = [];
-
-
-
-levels[1] = function(ui) {
-  
-  //Grab a new instance of the ztr engine
-  level = new Ztr(ui.canvas.id, ui.width, ui.height);
-
-
-  //Set up the background
-  var background = new Sprite({
-    image: 'images/grass.png',
-    sWidth: 100,
-    sHeight: 500,
-    sx: 0,
-    sy: 0,
-    dWidth: 100,
-    dHeight: 500
-  });
-  level.setBackground(background);
-  
-  
-  //So we can see where we've mowed
-  level.drawTrail(true);
-  level.setTrailImage('images/cut_grass.png');
-  
-  
-  //Here we set the control sprites for the handles.
-  var rHandle = new Sprite({
-    image: 'images/handle.png',
-    sWidth: 70,
-    sHeight: 20,
-    sx: 70,
-    sy: 0,
-    dWidth: 75,
-    dHeight: 20,
-    dz: 5,
-    fixed: true
-  });  
-  var lHandle = new Sprite({
-    image: 'images/handle.png',
-    sWidth: 70,
-    sHeight: 20,
-    sx: 0,
-    sy: 0,
-    dWidth: 75,
-    dHeight: 20,
-    dz: 5,
-    fixed: true
-  });
-  level.setControlSprite('right', rHandle);
-  level.setControlSprite('left', lHandle);
-  
-  
-  //example of a static sprite that is relative to the view port, not the level.
-  var hero = new Sprite({
-    image: 'images/tank.png',
-    sWidth: 30,
-    sHeight: 52,
-    sx: 0,
-    sy: 0,
-    dWidth: 30,
-    dHeight: 52,
-    dx: ui.width/2 - 15,
-    dy: ui.height/2 - 26,
-    dz: 1,
-    fixed: true,
-    hitArea: [[-11, -12], [11,  -12], [11,  23], [-11, 23]]
-  });
-  level.setHero(hero);
-  
-  
-  //Set the starting point for the hero
-  level.setView(0, 0, -200);
-  
-  
-  //Create the quit button.  This should probably be managed elsewhere.
-  var pauseButton = new Sprite({
-    image: 'images/car.png',
-    sWidth: 297,
-    sHeight: 147,
-    sx: 0,
-    sy: 0,
-    dWidth: 30,
-    dHeight: 15,
-    dx: ui.width/2-15,
-    dy: ui.height-15,
-    dz: 9,
-    fixed : true
-  });
-  
-  var b = new Ui.button(utils.square(pauseButton.dx, pauseButton.dy,
-    pauseButton.dWidth, pauseButton.dHeight), null, function(){
-      level.pause();
-      ui.clear(true);
-      LevelSelect(ui);
-    });
-  ui.addButton(b);
-  level.drawStaticSprite(pauseButton);
-  
-  
-  //Set the amount of time the player has to mow
-  level.setTimer(30);
-  
-  
-  //Set the function to be called when time runs out
-  level.setGameOver(function(levelInfo){
-    levelComplete(levelInfo, 1, 90);
-  });
-  
-  
-  //Let's mow!
-  level.start();  
-  
-};
-
-
-
-
-
-
-
-
-levels[2] = function(ui) {
-  
-  //Grab a new instance of the ztr engine
-  level = new Ztr(ui.canvas.id, ui.width, ui.height);
-
-
-  //Set up the background
-  var background = new Sprite({
-    image: 'images/grass.png',
-    sWidth: 500,
-    sHeight: 500,
-    sx: 0,
-    sy: 0,
-    dWidth: 500,
-    dHeight: 500
-  });
-  level.setBackground(background);
-  
-  
-  //So we can see where we've mowed
-  level.drawTrail(true);
-  level.setTrailImage('images/cut_grass.png');
-  
-  
-  //Here we set the control sprites for the handles.
-  var rHandle = new Sprite({
-    image: 'images/handle.png',
-    sWidth: 70,
-    sHeight: 20,
-    sx: 70,
-    sy: 0,
-    dWidth: 75,
-    dHeight: 20,
-    dz: 5,
-    fixed: true
-  });  
-  var lHandle = new Sprite({
-    image: 'images/handle.png',
-    sWidth: 70,
-    sHeight: 20,
-    sx: 0,
-    sy: 0,
-    dWidth: 75,
-    dHeight: 20,
-    dz: 5,
-    fixed: true
-  });
-  level.setControlSprite('right', rHandle);
-  level.setControlSprite('left', lHandle);
-  
-  
-  //example of a static sprite that is relative to the view port, not the level.
-  var hero = new Sprite({
-    image: 'images/tank.png',
-    sWidth: 30,
-    sHeight: 52,
-    sx: 0,
-    sy: 0,
-    dWidth: 30,
-    dHeight: 52,
-    dx: ui.width/2 - 15,
-    dy: ui.height/2 - 26,
-    dz: 1,
-    fixed: true,
-    hitArea: [[-11, -12], [11,  -12], [11,  23], [-11, 23]]
-  });
-  level.setHero(hero);
-  
-  
-  //Define a few quick functions to handle animations.  This should probably
-  //be managed by some other object.
-  var blink, hitWait, blinked = false;
-  function beginCollision(){
-    level.drawTrail(false);
-    clearTimeout(hitWait);
-    stopBlink();
-    blink = setInterval(animateBlink, 100);
-  }
-  function endCollision(){
-    hitWait = setTimeout(function(){
-      level.drawTrail(true)
-      stopBlink();
-      }, 2000);
-  }
-  function animateBlink(){
-    if(!blinked) {
-      blinked = true;
-      hero.sx = 30;
-    } else {
-      blinked = false;
-      hero.sx = 0;
-    }
-  }
-  function stopBlink(){
-    clearInterval(blink);
-    blinked = false;
-    hero.sx = 0;
-  }
-  
-  
-  //Add some other various sprites
-  var driveway = new Sprite({
-    image: 'images/driveway.png',
-    sWidth: 216,
-    sHeight: 124,
-    sx: 0,
-    sy: 0,
-    dWidth: 216,
-    dHeight: 124,
-    dx: 0,
-    dy: 155,
-    dz: -1,
-    drawToSpriteMap: true
-  });
-  level.drawSprite(driveway);
-  
-  var car = new Sprite({
-    image: 'images/car.png',
-    sWidth: 297,
-    sHeight: 147,
-    sx: 0,
-    sy: 0,
-    dWidth: 75,
-    dHeight: 37,
-    dx: 100,
-    dy: 200,
-    dz: 1
-  });
-  //Here the hit area defaults to the boundaries of the sprite
-  level.drawObstacle(car, function(){}, function(){});
-  
-  var house = new Sprite({
-    image: 'images/house.png',
-    sWidth: 300,
-    sHeight: 206,
-    sx: 0,
-    sy: 0,
-    dWidth: 300,
-    dHeight: 206,
-    dx: 110,
-    dy: 230,
-    dz: 2,
-    hitArea: [[130, 250], [390, 250], [390, 416], [130, 416]]
-  });
-  level.drawObstacle(house, function(){}, function(){});
-  
-  
-  //Set the starting point for the hero
-  level.setView(0, -25, 50);
-  
-  
-  //Create the quit button.  This should probably be managed elsewhere.
-  var pauseButton = new Sprite({
-    image: 'images/car.png',
-    sWidth: 297,
-    sHeight: 147,
-    sx: 0,
-    sy: 0,
-    dWidth: 30,
-    dHeight: 15,
-    dx: ui.width/2-15,
-    dy: ui.height-15,
-    dz: 9,
-    fixed : true
-  });
-  
-  var b = new Ui.button(utils.square(pauseButton.dx, pauseButton.dy,
-    pauseButton.dWidth, pauseButton.dHeight), null, function(){
-      level.pause();
-      ui.clear(true);
-      LevelSelect(ui);
-    });
-  ui.addButton(b);
-  level.drawStaticSprite(pauseButton);
-  
-  
-  //Set the amount of time the player has to mow
-  level.setTimer(175);
-  
-  
-  //Set the function to be called when time runs out
-  level.setGameOver(function(levelInfo){
-    levelComplete(levelInfo, 2, 85);
-  });
-  
-  
-  //Let's mow!
-  level.start();  
-  
-};
-
-
-/**
  * Auxiliary function to handle level completion.  Ideally this would be
  * managed by some all encompasing object.
  * @param {Object} levelInfo Passes the trail canvas to calculate percent mowed.
@@ -333,8 +13,8 @@ levels[2] = function(ui) {
  * @param {int} goal the percent of lawn that needs to be mowed. 
  *
  */
-var levelComplete = function(levelInfo, levelNo, goal){
-  level.pause();
+var levelComplete = function(levelInfo) {
+  
   var t = levelInfo.trail,
   trailPix = t.context.getImageData(0,0,t.canvas.width, t.canvas.height).data,
   spritePix = levelInfo.spriteMap.getImageData(0,0,t.canvas.width, t.canvas.height).data,
@@ -357,16 +37,285 @@ var levelComplete = function(levelInfo, levelNo, goal){
     LevelSelect(ui);
   }
 
-  if(percent >= goal) {
-    if(levels[levelNo+1])
-      db.levelInfo(levelNo+1, 0, 1, function(){});
-    db.levelInfo(levelNo, percent, 2, moveOn);
+  if(percent >= levelInfo.goal) {
+    if(levels[levelInfo.levelNo+1])
+      db.levelInfo(levelInfo.levelNo+1, 0, 1, function(){});
+    db.levelInfo(levelInfo.levelNo, percent, 2, moveOn);
     alert('Congrats! You mowed ' + percent + ' percent of the lawn!');
   } else {
-    db.levelInfo(levelNo, percent, 1, moveOn);
+    db.levelInfo(levelInfo.levelNo, percent, 1, moveOn);
     alert('Oh no! You only mowed ' + percent + ' percent of the lawn!');
   }  
   
 };
 
 
+/**
+ * The array that holds the levels.
+ * @type {Array.<object>}
+ */
+var levels = [
+  //Level 1
+  {
+    //Setting the background.
+    background : new Sprite({
+      image: 'images/grass.png',
+      sWidth: 100,
+      sHeight: 500,
+      sx: 0,
+      sy: 0,
+      dWidth: 100,
+      dHeight: 500
+    }),
+    //Setting the sprite for the main character, we define a hit are that
+    //is not the same as the sprite boundaries.
+    hero : new Sprite({
+      image: 'images/tank.png',
+      sWidth: 30,
+      sHeight: 52,
+      sx: 0,
+      sy: 0,
+      dWidth: 30,
+      dHeight: 52,
+      dx: window.innerWidth/2 - 15,//ui.width/2 - 15,
+      dy: window.innerHeight/2 - 26,//ui.height/2 - 26,
+      dz: 1,
+      fixed: true,
+      hitArea: [[-11, -12], [11,  -12], [11,  23], [-11, 23]]
+    }),
+    //Set the sprites for the lawn mower controls.
+    handles: {
+      right : new Sprite({
+        image: 'images/handle.png',
+        sWidth: 70,
+        sHeight: 20,
+        sx: 70,
+        sy: 0,
+        dWidth: 75,
+        dHeight: 20,
+        dz: 5,
+        fixed: true
+      }),
+      left : new Sprite({
+        image: 'images/handle.png',
+        sWidth: 70,
+        sHeight: 20,
+        sx: 0,
+        sy: 0,
+        dWidth: 75,
+        dHeight: 20,
+        dz: 5,
+        fixed: true
+      })
+    },
+    //Set the start view for the level.
+    view : {
+      angle: 0,
+      pos : { x: 0, y: -215 }
+    },
+    //Here we set some of the other level information.
+    drawTrail : true,
+    trailImage : 'images/cut_grass.png',
+    timer : 30,
+    goal : 90, 
+    gameOver : levelComplete
+  },
+  
+  //Level 2
+  {
+    background : new Sprite({
+      image: 'images/grass.png',
+      sWidth: 400,
+      sHeight: 400,
+      sx: 0,
+      sy: 0,
+      dWidth: 400,
+      dHeight: 400
+    }),
+    hero : new Sprite({
+      image: 'images/tank.png',
+      sWidth: 30,
+      sHeight: 52,
+      sx: 0,
+      sy: 0,
+      dWidth: 30,
+      dHeight: 52,
+      dx: window.innerWidth/2 - 15,//ui.width/2 - 15,
+      dy: window.innerHeight/2 - 26,//ui.height/2 - 26,
+      dz: 1,
+      fixed: true,
+      hitArea: [[-11, -12], [11,  -12], [11,  23], [-11, 23]]
+    }),
+    handles: {
+      right : new Sprite({
+        image: 'images/handle.png',
+        sWidth: 70,
+        sHeight: 20,
+        sx: 70,
+        sy: 0,
+        dWidth: 75,
+        dHeight: 20,
+        dz: 5,
+        fixed: true
+      }),
+      left : new Sprite({
+        image: 'images/handle.png',
+        sWidth: 70,
+        sHeight: 20,
+        sx: 0,
+        sy: 0,
+        dWidth: 75,
+        dHeight: 20,
+        dz: 5,
+        fixed: true
+      })
+    },
+    //This is an example of a solid obstacle that the character
+    //cannot move through.
+    obstacles : [
+      {
+        sprite : new Sprite({
+          image: 'images/bg_color.png',
+          sWidth: 99,
+          sHeight: 99,
+          sx: 0,
+          sy: 0,
+          dWidth: 300,
+          dHeight: 206,
+          dx: 0,
+          dy: 0,
+          dz: -1,
+          drawToSpriteMap: true
+        }),
+        beginCollision : function(){},
+        endCollision : function(){}
+      }
+    ],
+    view : {
+      angle: 2,
+      pos : { x: -30, y: -150 }
+    },
+    drawTrail : true,
+    trailImage : 'images/cut_grass.png',
+    timer : 115,
+    goal : 85, 
+    gameOver : levelComplete
+  },
+  
+  //Level 3
+  {
+    background : new Sprite({
+      image: 'images/grass.png',
+      sWidth: 500,
+      sHeight: 500,
+      sx: 0,
+      sy: 0,
+      dWidth: 500,
+      dHeight: 500
+    }),
+    hero : new Sprite({
+      image: 'images/tank.png',
+      sWidth: 30,
+      sHeight: 52,
+      sx: 0,
+      sy: 0,
+      dWidth: 30,
+      dHeight: 52,
+      dx: window.innerWidth/2 - 15,//ui.width/2 - 15,
+      dy: window.innerHeight/2 - 26,//ui.height/2 - 26,
+      dz: 1,
+      fixed: true,
+      hitArea: [[-11, -12], [11,  -12], [11,  23], [-11, 23]]
+    }),
+    handles: {
+      right : new Sprite({
+        image: 'images/handle.png',
+        sWidth: 70,
+        sHeight: 20,
+        sx: 70,
+        sy: 0,
+        dWidth: 75,
+        dHeight: 20,
+        dz: 5,
+        fixed: true
+      }),
+      left : new Sprite({
+        image: 'images/handle.png',
+        sWidth: 70,
+        sHeight: 20,
+        sx: 0,
+        sy: 0,
+        dWidth: 75,
+        dHeight: 20,
+        dz: 5,
+        fixed: true
+      })
+    },
+    obstacles : [
+      {
+        sprite: new Sprite({
+          image: 'images/house.png',
+          sWidth: 300,
+          sHeight: 206,
+          sx: 0,
+          sy: 0,
+          dWidth: 300,
+          dHeight: 206,
+          dx: 110,
+          dy: 230,
+          dz: 2,
+          hitArea: [[130, 250], [390, 250], [390, 416], [130, 416]]
+        }),
+        beginCollision: function(){},
+        endCollision: function(){}
+      },
+      {
+        sprite: new Sprite({
+          image: 'images/car.png',
+          sWidth: 297,
+          sHeight: 147,
+          sx: 0,
+          sy: 0,
+          dWidth: 75,
+          dHeight: 37,
+          dx: 100,
+          dy: 200,
+          dz: 1
+        }),
+        beginCollision: function(){},
+        endCollision: function(){}
+      }
+    ],
+    //This is an example of an item that the character can move
+    //through/over/under.
+    items : [
+      {
+        sprite: new Sprite({
+          image: 'images/driveway.png',
+          sWidth: 216,
+          sHeight: 124,
+          sx: 0,
+          sy: 0,
+          dWidth: 216,
+          dHeight: 124,
+          dx: 0,
+          dy: 155,
+          dz: -1,
+          drawToSpriteMap: true,
+          hitArea: [[0, 180], [195, 180], [195, 256], [0, 256]]
+        }),
+        beginCollision: function(ztr){ztr.setSpeed(8)},
+        endCollision: function(ztr){ztr.setSpeed(5)}
+      }
+    ],
+    view : {
+      angle: 0,
+      pos : { x: -25, y: 50 }
+    },
+    drawTrail : true,
+    trailImage : 'images/cut_grass.png',
+    timer : 120,
+    goal : 90, 
+    gameOver : levelComplete
+  }
+];
